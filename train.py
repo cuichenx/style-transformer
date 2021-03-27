@@ -6,7 +6,7 @@ from torch import nn, optim
 #from tensorboardX import SummaryWriter
 from torch.nn.utils import clip_grad_norm_
 
-from evaluator import Evaluator
+#from evaluator import Evaluator
 from utils import tensor2text, calc_ppl, idx2onehot, add_noise, word_drop
 
 def get_lengths(tokens, eos_idx):
@@ -321,7 +321,7 @@ def train(config, vocab, model_F, model_D, train_iters, dev_iters, test_iters):
             #save model
             torch.save(model_F.state_dict(), config.save_folder + '/ckpts/' + str(global_step) + '_F.pth')
             torch.save(model_D.state_dict(), config.save_folder + '/ckpts/' + str(global_step) + '_D.pth')
-            auto_eval(config, vocab, model_F, test_iters, global_step, temperature)
+            auto_eval(config, vocab, model_F, test_iters, global_step, temperature)  # don't have ppl
             #for path, sub_writer in writer.all_writers.items():
             #    sub_writer.flush()
 
@@ -374,16 +374,23 @@ def auto_eval(config, vocab, model_F, test_iters, global_step, temperature):
     gold_text, raw_output, rev_output = zip(inference(neg_iter, 0), inference(pos_iter, 1))
 
 
-    evaluator = Evaluator()
-    ref_text = evaluator.yelp_ref
-
-    
-    acc_neg = evaluator.yelp_acc_0(rev_output[0])
-    acc_pos = evaluator.yelp_acc_1(rev_output[1])
-    bleu_neg = evaluator.yelp_ref_bleu_0(rev_output[0])
-    bleu_pos = evaluator.yelp_ref_bleu_1(rev_output[1])
-    ppl_neg = evaluator.yelp_ppl(rev_output[0])
-    ppl_pos = evaluator.yelp_ppl(rev_output[1])
+    # evaluator = Evaluator()
+    # ref_text = evaluator.yelp_ref
+    #
+    #
+    # acc_neg = evaluator.yelp_acc_0(rev_output[0])
+    # acc_pos = evaluator.yelp_acc_1(rev_output[1])
+    # bleu_neg = evaluator.yelp_ref_bleu_0(rev_output[0])
+    # bleu_pos = evaluator.yelp_ref_bleu_1(rev_output[1])
+    # ppl_neg = evaluator.yelp_ppl(rev_output[0])
+    # ppl_pos = evaluator.yelp_ppl(rev_output[1])
+    yelp_ref0_path = 'evaluator/yelp.refs.0'
+    yelp_ref1_path = 'evaluator/yelp.refs.1'
+    ref_text = []
+    with open(yelp_ref0_path, 'r') as fin:
+        ref_text.append(fin.readlines())
+    with open(yelp_ref1_path, 'r') as fin:
+        ref_text.append(fin.readlines())
 
     for k in range(5):
         idx = np.random.randint(len(rev_output[0]))
@@ -406,28 +413,28 @@ def auto_eval(config, vocab, model_F, test_iters, global_step, temperature):
 
     print('*' * 20, '********', '*' * 20)
 
-    print(('[auto_eval] acc_pos: {:.4f} acc_neg: {:.4f} ' + \
-          'bleu_pos: {:.4f} bleu_neg: {:.4f} ' + \
-          'ppl_pos: {:.4f} ppl_neg: {:.4f}\n').format(
-              acc_pos, acc_neg, bleu_pos, bleu_neg, ppl_pos, ppl_neg,
-    ))
+    # print(('[auto_eval] acc_pos: {:.4f} acc_neg: {:.4f} ' + \
+    #       'bleu_pos: {:.4f} bleu_neg: {:.4f} ' + \
+    #       'ppl_pos: {:.4f} ppl_neg: {:.4f}\n').format(
+    #           acc_pos, acc_neg, bleu_pos, bleu_neg, ppl_pos, ppl_neg,
+    # ))
 
     
     # save output
     save_file = config.save_folder + '/' + str(global_step) + '.txt'
     eval_log_file = config.save_folder + '/eval_log.txt'
-    with open(eval_log_file, 'a') as fl:
-        print(('iter{:5d}:  acc_pos: {:.4f} acc_neg: {:.4f} ' + \
-               'bleu_pos: {:.4f} bleu_neg: {:.4f} ' + \
-               'ppl_pos: {:.4f} ppl_neg: {:.4f}\n').format(
-            global_step, acc_pos, acc_neg, bleu_pos, bleu_neg, ppl_pos, ppl_neg,
-        ), file=fl)
+    # with open(eval_log_file, 'a') as fl:
+    #     print(('iter{:5d}:  acc_pos: {:.4f} acc_neg: {:.4f} ' + \
+    #            'bleu_pos: {:.4f} bleu_neg: {:.4f} ' + \
+    #            'ppl_pos: {:.4f} ppl_neg: {:.4f}\n').format(
+    #         global_step, acc_pos, acc_neg, bleu_pos, bleu_neg, ppl_pos, ppl_neg,
+    #     ), file=fl)
     with open(save_file, 'w') as fw:
-        print(('[auto_eval] acc_pos: {:.4f} acc_neg: {:.4f} ' + \
-               'bleu_pos: {:.4f} bleu_neg: {:.4f} ' + \
-               'ppl_pos: {:.4f} ppl_neg: {:.4f}\n').format(
-            acc_pos, acc_neg, bleu_pos, bleu_neg, ppl_pos, ppl_neg,
-        ), file=fw)
+    #     print(('[auto_eval] acc_pos: {:.4f} acc_neg: {:.4f} ' + \
+    #            'bleu_pos: {:.4f} bleu_neg: {:.4f} ' + \
+    #            'ppl_pos: {:.4f} ppl_neg: {:.4f}\n').format(
+    #         acc_pos, acc_neg, bleu_pos, bleu_neg, ppl_pos, ppl_neg,
+    #     ), file=fw)
 
         for idx in range(len(rev_output[0])):
             print('*' * 20, 'neg sample', '*' * 20, file=fw)

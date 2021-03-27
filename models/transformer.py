@@ -45,7 +45,14 @@ class StyleTransformer(nn.Module):
         tgt_mask = torch.ones((self.max_length, self.max_length)).to(src_mask.device)
         tgt_mask = (tgt_mask.tril() == 0).view(1, 1, self.max_length, self.max_length)
 
-        style_emb = self.style_embed(style).unsqueeze(1)
+        if style.type().endswith('LongTensor'):
+            style_emb = self.style_embed(style).unsqueeze(1)
+        else:
+            # interpolate
+            t0 = self.style_embed(torch.zeros_like(style, dtype=torch.long))
+            t1 = self.style_embed(torch.ones_like(style, dtype=torch.long))
+            style_emb = t0 + (t1-t0)*style.unsqueeze(1)
+            style_emb = style_emb.unsqueeze(1)
 
         enc_input = torch.cat((style_emb, self.embed(inp_tokens, pos_idx[:, :max_enc_len])), 1)
         memory = self.encoder(enc_input, src_mask)

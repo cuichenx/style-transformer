@@ -2,7 +2,7 @@ import torch
 import time
 from data import load_dataset
 from models import StyleTransformer, Discriminator
-from train import train, auto_eval
+from train import train#, auto_eval
 
 
 class Config():
