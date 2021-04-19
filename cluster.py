@@ -50,7 +50,7 @@ class EmbeddingsNN:
         print('doing tsne...')
         mapped_X = TSNE(n_components=2).fit_transform(np.concatenate((self.all_embed[:limit], self.all_embed[-2:])))
         print('done')
-        pylab.figure(figsize=(10, 10))
+        pylab.figure(figsize=(6, 8))
 
         for i, w in enumerate(self.vocab.itos[:limit]):
             pylab.text(mapped_X[i, 0], mapped_X[i, 1], w, color='k')
@@ -102,4 +102,4 @@ if __name__ == '__main__':
 
     NN =  EmbeddingsNN(vocab)
     NN.cluster_embeddings(token_embed, style_embed)
-
+    NN.tsne_plot_representation()
